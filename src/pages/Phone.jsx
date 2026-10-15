@@ -17,12 +17,14 @@ export default function Phone() {
   const query = params.get('q') ?? ''
   const [input, setInput] = useState(query)
 
+  const trimmed = input.trim()
+
+  // A short pause batches fast typing into one request while still feeling live.
   useEffect(() => {
-    const trimmed = input.trim()
     if (trimmed === query) return
-    const timer = setTimeout(() => setParams(trimmed ? { q: trimmed } : {}, { replace: true }), 350)
+    const timer = setTimeout(() => setParams(trimmed ? { q: trimmed } : {}, { replace: true }), 150)
     return () => clearTimeout(timer)
-  }, [input, query, setParams])
+  }, [trimmed, query, setParams])
 
   return (
     <div className="screen phone">
@@ -42,7 +44,14 @@ export default function Phone() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
-          {query ? <SearchResults query={query} /> : ROWS.map((r) => <Row key={r.name} {...r} />)}
+          {/* Clearing the box brings the rows back immediately, without waiting for the pause. */}
+          {!trimmed ? (
+            ROWS.map((r) => <Row key={r.name} {...r} />)
+          ) : query ? (
+            <SearchResults query={query} />
+          ) : (
+            <p className="muted">Searching…</p>
+          )}
         </>
       )}
     </div>

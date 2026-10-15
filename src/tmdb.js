@@ -37,7 +37,28 @@ export const getTrending = () => list('/trending/movie/week')
 export const getTopRated = () => list('/movie/top_rated')
 export const getGenre = (genreId) =>
   list('/discover/movie', { with_genres: genreId, sort_by: 'popularity.desc', 'vote_count.gte': 200 })
-export const searchMovies = (query) => list('/search/movie', { query, include_adult: false })
+// Lowercase, strip accents and punctuation: "Dune: Part Two" -> "dune part two".
+const normalize = (s) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+
+// 0 = title is the query, 1 = title contains the query as whole words, 2 = anything else
+// (TMDB also matches alternate and foreign titles, e.g. "dune" finds "Anatomie d'une chute").
+function matchTier(title, query) {
+  const t = normalize(title)
+  if (t === query) return 0
+  return ` ${t} `.includes(` ${query} `) ? 1 : 2
+}
+
+// Hides titles without a poster, puts title matches first, then the most popular within each tier.
+export async function searchMovies(query) {
+  const { results } = await get('/search/movie', { query, include_adult: false })
+  const q = normalize(query)
+  return results
+    .filter((m) => m.poster_path)
+    .map((m) => ({ m, tier: matchTier(m.title, q) }))
+    .sort((a, b) => a.tier - b.tier || b.m.popularity - a.m.popularity)
+    .map(({ m }) => toTitle(m))
+}
 
 export async function getMovie(id) {
   const m = await get(`/movie/${id}`, { append_to_response: 'videos' })

@@ -81,3 +81,4 @@ button.link {
 .detail h1 { font-size: 24px; margin: 0 0 4px; }
 .detail .muted { margin: 0 0 14px; }
 .detail p { line-height: 1.5; }
+.grid.stale { opacity: 0.6; transition: opacity 0.15s; }
