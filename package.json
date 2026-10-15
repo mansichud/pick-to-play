@@ -1,0 +1,24 @@
+{
+  "name": "pick-to-play",
+  "version": "1.0.0",
+  "description": "Phone-as-remote TV discovery prototype",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "emulators": "firebase emulators:start --only auth,firestore"
+  },
+  "type": "module",
+  "dependencies": {
+    "firebase": "^13.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
+    "firebase-tools": "^15.34.0",
+    "vite": "^8.3.4"
+  },
+  "private": true
+}
