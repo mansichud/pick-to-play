@@ -4,7 +4,7 @@
 
 PickToPlay is a prototype that tests one question: *is choosing what to watch on your phone and sending it to the TV faster than browsing on the TV with arrow keys?*
 
-> **Status:** 🚧 In progress. Milestone 1 of 6 is done (sign-in and app shell). There are no test results yet. They'll be posted here exactly as measured.
+> **Status:** 🚧 In progress. Milestones 1–3 of 6 are done (sign-in, phone browse and search, TV browse and trailer player). There are no test results yet. They'll be posted here exactly as measured.
 
 ## The problem
 
@@ -61,9 +61,9 @@ _Not yet run._
 | # | Milestone | Status |
 |---|---|---|
 | 1 | Firebase project, auth, both routes rendering | ✅ Done |
-| 2 | TMDB rows and title detail on the phone page | ⏳ Next |
-| 3 | TV page: arrow-key rows and trailer player | |
-| 4 | Send to TV via Firestore commands | |
+| 2 | TMDB rows and title detail on the phone page | ✅ Done |
+| 3 | TV page: arrow-key rows and trailer player | ✅ Done |
+| 4 | Send to TV via Firestore commands | ⏳ Next |
 | 5 | Event logging and time-to-play results page | |
 | 6 | Run the 10–15 person test; publish results | |
 

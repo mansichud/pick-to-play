@@ -37,9 +37,17 @@ export const getTrending = () => list('/trending/movie/week')
 export const getTopRated = () => list('/movie/top_rated')
 export const getGenre = (genreId) =>
   list('/discover/movie', { with_genres: genreId, sort_by: 'popularity.desc', 'vote_count.gte': 200 })
+
+// The browse rows, shared by the phone and the TV so both test conditions show the same titles.
+export const BROWSE_ROWS = [
+  { name: 'Trending', load: getTrending },
+  { name: 'Top Rated', load: getTopRated },
+  { name: GENRE_ROW.name, load: () => getGenre(GENRE_ROW.id) },
+]
+
 // Lowercase, strip accents and punctuation: "Dune: Part Two" -> "dune part two".
 const normalize = (s) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 
 // 0 = title is the query, 1 = title contains the query as whole words, 2 = anything else
 // (TMDB also matches alternate and foreign titles, e.g. "dune" finds "Anatomie d'une chute").
