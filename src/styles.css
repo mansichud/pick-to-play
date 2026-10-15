@@ -158,3 +158,34 @@ button.link {
 .send-button { width: 100%; font-size: 17px; padding: 14px; }
 .send p { margin: 8px 0 0; font-size: 14px; }
 .send-hint { font-size: 14px; }
+
+/* Facilitator: test setup and trial bar */
+.variant-picker { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.variant-picker legend { color: var(--muted); font-size: 14px; margin-bottom: 6px; padding: 0; }
+.screen.tv .variant-picker legend { font-size: 20px; }
+label.radio { flex-direction: row; align-items: center; gap: 10px; color: var(--text); font-size: inherit; }
+label.radio input { width: 20px; height: 20px; }
+.link-plain { color: var(--accent); text-align: center; text-decoration: none; }
+.trial-bar {
+  position: fixed; right: 16px; bottom: 16px; z-index: 20; display: flex; align-items: center; gap: 16px;
+  background: rgba(26, 29, 36, 0.92); border: 1px solid #2c313b; border-radius: 10px;
+  padding: 8px 8px 8px 16px; font-size: 16px; color: var(--muted);
+}
+.trial-bar.ended { padding-right: 16px; }
+.trial-bar a { color: var(--accent); }
+.trial-timer { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; min-width: 4.5em; }
+.trial-giveup { background: #5a2323; padding: 8px 14px; font-size: 15px; }
+
+/* Results */
+.screen.results { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
+.screen.results .bar { margin-bottom: 8px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 20px 0 28px; }
+.summary-card { background: var(--surface); border-radius: 12px; padding: 20px 24px; }
+.summary-card h2 { margin: 0 0 8px; font-size: 18px; }
+.summary-card p { margin: 4px 0; }
+.summary-big { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 4px 0 0 !important; }
+.trials { width: 100%; border-collapse: collapse; font-size: 14px; display: block; overflow-x: auto; }
+.trials th, .trials td { padding: 8px 12px; border-bottom: 1px solid #2c313b; text-align: left; white-space: nowrap; }
+.trials th { color: var(--muted); font-weight: 500; }
+.trials .num { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .screen.results { padding: 16px; } }

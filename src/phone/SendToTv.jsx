@@ -12,7 +12,7 @@ const MESSAGES = {
 }
 
 // Shown only while a TV signed in to this account is online.
-export default function SendToTv({ movie }) {
+export default function SendToTv({ movie, onSend }) {
   const { user } = useAuth()
   const deviceId = useMemo(() => getDeviceId('phone'), [])
   const tv = useOnlineTv(user.uid)
@@ -29,6 +29,7 @@ export default function SendToTv({ movie }) {
   if (!movie.trailerKey) return <p className="muted send-hint">No trailer available for this title.</p>
 
   async function send() {
+    onSend?.()
     setStatus('sending')
     try {
       setStatus(await sendCommand(user.uid, deviceId, 'PLAY', { tmdbId: movie.id, trailerKey: movie.trailerKey }))

@@ -5,6 +5,8 @@ import { AuthProvider } from './auth'
 import RequireAuth from './RequireAuth'
 import Home from './pages/Home'
 import Tv from './pages/Tv'
+import TvTest from './pages/TvTest'
+import Results from './pages/Results'
 import Phone from './pages/Phone'
 import PhoneTitle from './pages/PhoneTitle'
 import './styles.css'
@@ -16,6 +18,8 @@ createRoot(document.getElementById('root')).render(
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/tv" element={<RequireAuth variant="tv"><Tv /></RequireAuth>} />
+          <Route path="/tv/test" element={<RequireAuth variant="tv"><TvTest /></RequireAuth>} />
+          <Route path="/results" element={<RequireAuth variant="tv"><Results /></RequireAuth>} />
           <Route path="/phone" element={<RequireAuth variant="phone"><Phone /></RequireAuth>} />
           <Route path="/phone/title/:id" element={<RequireAuth variant="phone"><PhoneTitle /></RequireAuth>} />
         </Routes>

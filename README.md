@@ -4,7 +4,7 @@
 
 PickToPlay is a prototype that tests one question: *is choosing what to watch on your phone and sending it to the TV faster than browsing on the TV with arrow keys?*
 
-> **Status:** 🚧 In progress. Milestones 1–4 of 6 are done (sign-in, phone and TV browse and search, trailer player, and Send to TV). There are no test results yet. They'll be posted here exactly as measured.
+> **Status:** 🚧 In progress. Milestones 1–5 of 6 are done (sign-in, phone and TV browse and search, trailer player, Send to TV, and test instrumentation). There are no test results yet. They'll be posted here exactly as measured.
 
 ## The problem
 
@@ -42,7 +42,7 @@ flowchart LR
 
 - **Metric:** *time-to-play*, the seconds from opening browse to playback starting.
 - **Comparison:** TV-only arrow-key browsing (control) vs. choosing on the phone and sending to the TV.
-- **Method:** 10–15 people each try both versions, in alternating order.
+- **Method:** 10–15 people each try both versions, in alternating order. The facilitator starts each attempt at `/tv/test` (participant code + variant); it ends at the first trailer playback, when the facilitator presses **Gave up**, or after 3 minutes (counted as an abandon). `/results` shows the medians and every attempt, and exports a CSV.
 - **Reported:** median time-to-play for each version, and how many people quit without choosing.
 - **Honesty rule:** results are reported as measured, including anything that didn't work.
 
@@ -64,8 +64,8 @@ _Not yet run._
 | 2 | TMDB rows and title detail on the phone page | ✅ Done |
 | 3 | TV page: arrow-key rows and trailer player | ✅ Done |
 | 4 | Send to TV via Firestore commands | ✅ Done |
-| 5 | Event logging and time-to-play results page | ⏳ Next |
-| 6 | Run the 10–15 person test; publish results | |
+| 5 | Event logging and time-to-play results page | ✅ Done |
+| 6 | Run the 10–15 person test; publish results | ⏳ Next |
 
 ## Run it locally
 

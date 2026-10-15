@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BROWSE_ROWS, hasTmdbToken } from '../tmdb'
 import Row from '../phone/Row'
 import SearchResults from '../phone/SearchResults'
+import usePhoneTrial from '../phone/usePhoneTrial'
 import SignOutButton from '../SignOutButton'
 
 export default function Phone() {
@@ -10,6 +11,7 @@ export default function Phone() {
   const [params, setParams] = useSearchParams()
   const query = params.get('q') ?? ''
   const [input, setInput] = useState(query)
+  const log = usePhoneTrial(() => setInput(''))
 
   const trimmed = input.trim()
 
@@ -19,6 +21,14 @@ export default function Phone() {
     const timer = setTimeout(() => setParams(trimmed ? { q: trimmed } : {}, { replace: true }), 150)
     return () => clearTimeout(timer)
   }, [trimmed, query, setParams])
+
+  // Log each settled query, but not the one restored when coming Back from a title.
+  const lastLogged = useRef(query)
+  useEffect(() => {
+    if (!query || query === lastLogged.current) return
+    lastLogged.current = query
+    log('search')
+  }, [query, log])
 
   return (
     <div className="screen phone">
@@ -40,7 +50,7 @@ export default function Phone() {
           />
           {/* Clearing the box brings the rows back immediately, without waiting for the pause. */}
           {!trimmed ? (
-            BROWSE_ROWS.map((r) => <Row key={r.name} {...r} />)
+            BROWSE_ROWS.map((r) => <Row key={r.name} {...r} onScroll={() => log('row_scroll')} />)
           ) : query ? (
             <SearchResults query={query} />
           ) : (

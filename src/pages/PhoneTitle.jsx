@@ -1,12 +1,21 @@
+import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { formatRuntime, getMovie, posterUrl } from '../tmdb'
 import useAsync from '../useAsync'
 import SendToTv from '../phone/SendToTv'
+import usePhoneTrial from '../phone/usePhoneTrial'
 
 export default function PhoneTitle() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { data: movie, error, loading } = useAsync(() => getMovie(id), [id])
+  const log = usePhoneTrial()
+
+  // Deferred a tick so React's development double-mount logs one view, not two.
+  useEffect(() => {
+    const timer = setTimeout(() => log('title_view', { tmdbId: Number(id) }))
+    return () => clearTimeout(timer)
+  }, [id, log])
 
   // Back keeps search results and scroll position; a direct link has no history, so go home.
   const goBack = () => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/phone'))
@@ -27,7 +36,7 @@ export default function PhoneTitle() {
               .filter(Boolean)
               .join(' · ')}
           </p>
-          <SendToTv movie={movie} />
+          <SendToTv movie={movie} onSend={() => log('send_to_tv', { tmdbId: movie.id })} />
           <p>{movie.overview || 'No synopsis available.'}</p>
         </article>
       )}

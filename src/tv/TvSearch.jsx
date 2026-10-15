@@ -27,7 +27,7 @@ function stepCol(r, c, dir) {
 }
 
 // The TV page owns `query` so the search survives leaving and reopening it.
-export default function TvSearch({ query, setQuery, active, onOpen, onExit }) {
+export default function TvSearch({ query, setQuery, active, onOpen, onExit, onSearch }) {
   const [debounced, setDebounced] = useState(query.trim())
   const [zone, setZone] = useState('keys') // 'clear' | 'keys' | 'results'
   const [key, setKey] = useState({ r: 0, c: 0 })
@@ -47,6 +47,14 @@ export default function TvSearch({ query, setQuery, active, onOpen, onExit }) {
 
   // New results start from the first title.
   useEffect(() => setResultCol(0), [debounced])
+
+  // Log each settled query, but not the one restored when search reopens.
+  const lastLogged = useRef(debounced)
+  useEffect(() => {
+    if (!debounced || debounced === lastLogged.current) return
+    lastLogged.current = debounced
+    onSearch?.(debounced)
+  }, [debounced, onSearch])
 
   useEffect(() => {
     focusedEl.current?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })

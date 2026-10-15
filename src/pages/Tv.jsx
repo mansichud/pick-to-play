@@ -4,12 +4,15 @@ import { useAuth } from '../auth'
 import { db } from '../firebase'
 import { getDeviceId, useTvHeartbeat } from '../remote/devices'
 import { useCommandListener } from '../remote/commands'
+import { endTrial, logEvent, useTrial } from '../remote/trial'
 import { BROWSE_ROWS, getMovie, hasTmdbToken, posterUrl } from '../tmdb'
 import useAsync from '../useAsync'
 import TvDetail from '../tv/TvDetail'
 import TvPlayer from '../tv/TvPlayer'
 import TvSearch from '../tv/TvSearch'
+import TrialBar from '../tv/TrialBar'
 import { BACK_KEYS, OK_KEYS, isShortcut } from '../tv/keys'
+import { Link } from 'react-router-dom'
 import SignOutButton from '../SignOutButton'
 
 // Row -1 is the Search button above the rows.
@@ -45,6 +48,12 @@ export default function Tv() {
 
   const deviceId = useMemo(() => getDeviceId('tv'), [])
   useTvHeartbeat(user.uid, deviceId)
+
+  // The running test attempt, if any. Events are only logged while one is running.
+  const trial = useTrial(user.uid)
+  const trialRef = useRef(trial)
+  trialRef.current = trial
+  const log = useCallback((name, extra) => logEvent(user.uid, trialRef.current, 'tv', name, extra), [user.uid])
 
   // Browsers block autoplay with sound until someone has pressed a key on the page.
   const [activated, setActivated] = useState(hasUserActivation)
@@ -91,7 +100,9 @@ export default function Tv() {
   const onPlayerStart = useCallback(() => {
     startWaiter.current?.(true)
     const m = playingRef.current
-    if (m) updateSession(user.uid, { nowPlaying: { tmdbId: m.id, title: m.title, trailerKey: m.trailerKey }, state: 'playing' })
+    if (!m) return
+    updateSession(user.uid, { nowPlaying: { tmdbId: m.id, title: m.title, trailerKey: m.trailerKey }, state: 'playing' })
+    endTrial(user.uid, trialRef.current, 'played', m.id) // logs playback_start once per attempt
   }, [user.uid])
 
   // Back to idle whenever the player closes.
@@ -107,10 +118,12 @@ export default function Tv() {
 
   const openTitle = useCallback((t) => setOpen({ id: t.id }), [])
   const exitSearch = useCallback(() => setSearching(false), [])
+  const onSearch = useCallback(() => log('search'), [log])
 
   // Load the detail page's data when a title is opened.
   useEffect(() => {
     if (!open) return
+    log('title_view', { tmdbId: open.id })
     let active = true
     setDetail({ movie: null, error: null })
     getMovie(open.id).then(
@@ -120,7 +133,7 @@ export default function Tv() {
     return () => {
       active = false
     }
-  }, [open])
+  }, [open, log])
 
   useEffect(() => {
     focusedCard.current?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' })
@@ -148,8 +161,13 @@ export default function Tv() {
         const count = rows[row].titles.length
         if (e.key === 'ArrowUp') setRow((r) => r - 1)
         else if (e.key === 'ArrowDown') setRow((r) => Math.min(rows.length - 1, r + 1))
-        else if (e.key === 'ArrowLeft') setCols((c) => c.with(row, Math.max(0, c[row] - 1)))
-        else if (e.key === 'ArrowRight') setCols((c) => c.with(row, Math.min(count - 1, c[row] + 1)))
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          const next = Math.min(count - 1, Math.max(0, col + (e.key === 'ArrowRight' ? 1 : -1)))
+          if (next !== col) {
+            setCols((c) => c.with(row, next))
+            log('row_scroll') // one per step along a row
+          }
+        }
         else if (OK_KEYS.includes(e.key) && focused) setOpen({ id: focused.id })
         else return
       }
@@ -157,14 +175,14 @@ export default function Tv() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [rows, row, focused, open, detail, playing, searching])
+  }, [rows, row, col, focused, open, detail, playing, searching, log])
 
   return (
     <div className="screen tv">
       <header className="bar">
         <span className="brand">PickToPlay</span>
         <span className="muted">
-          TV · {user.email} · <SignOutButton />
+          TV · {user.email} · <Link to="/tv/test" className="link-plain">Run a test</Link> · <SignOutButton />
         </span>
       </header>
 
@@ -172,7 +190,16 @@ export default function Tv() {
       {error && <p className="error">Couldn’t load titles. Reload to try again.</p>}
       {hasTmdbToken && !rows && !error && <p className="muted">Loading…</p>}
 
-      {searching && <TvSearch query={searchQuery} setQuery={setSearchQuery} active={!open && !playing} onOpen={openTitle} onExit={exitSearch} />}
+      {searching && (
+        <TvSearch
+          query={searchQuery}
+          setQuery={setSearchQuery}
+          active={!open && !playing}
+          onOpen={openTitle}
+          onExit={exitSearch}
+          onSearch={onSearch}
+        />
+      )}
 
       {rows && !searching && (
         <div
@@ -213,6 +240,8 @@ export default function Tv() {
       {!activated && !playing && (
         <p className="tv-banner">Press any key on the TV so the phone can start trailers with sound.</p>
       )}
+
+      {trial && <TrialBar uid={user.uid} trial={trial} />}
 
       {open && <TvDetail movie={detail.movie} error={detail.error} />}
       {playing && (
