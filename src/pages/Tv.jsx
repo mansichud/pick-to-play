@@ -1,5 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { useAuth } from '../auth'
+import { db } from '../firebase'
+import { getDeviceId, useTvHeartbeat } from '../remote/devices'
+import { useCommandListener } from '../remote/commands'
 import { BROWSE_ROWS, getMovie, hasTmdbToken, posterUrl } from '../tmdb'
 import useAsync from '../useAsync'
 import TvDetail from '../tv/TvDetail'
@@ -10,6 +14,17 @@ import SignOutButton from '../SignOutButton'
 
 // Row -1 is the Search button above the rows.
 const SEARCH_ROW = -1
+
+// How long the TV waits for a phone-started trailer to begin before reporting failure.
+const START_TIMEOUT_MS = 4_500
+
+const hasUserActivation = () => navigator.userActivation?.hasBeenActive ?? true
+
+function updateSession(uid, fields) {
+  setDoc(doc(db, 'sessions', uid), { ...fields, updatedAt: serverTimestamp() }, { merge: true }).catch((err) =>
+    console.warn('Session update failed', err),
+  )
+}
 
 const loadRows = () =>
   Promise.all(BROWSE_ROWS.map(async (r) => ({ name: r.name, titles: await r.load() })))
@@ -27,6 +42,65 @@ export default function Tv() {
   const [detail, setDetail] = useState({ movie: null, error: null })
   const [playing, setPlaying] = useState(null)
   const focusedCard = useRef(null)
+
+  const deviceId = useMemo(() => getDeviceId('tv'), [])
+  useTvHeartbeat(user.uid, deviceId)
+
+  // Browsers block autoplay with sound until someone has pressed a key on the page.
+  const [activated, setActivated] = useState(hasUserActivation)
+  useEffect(() => {
+    if (activated) return
+    const onInput = () => setActivated(true)
+    window.addEventListener('keydown', onInput)
+    window.addEventListener('pointerdown', onInput)
+    return () => {
+      window.removeEventListener('keydown', onInput)
+      window.removeEventListener('pointerdown', onInput)
+    }
+  }, [activated])
+
+  // Resolves a phone command once its trailer starts, fails, or times out.
+  const startWaiter = useRef(null)
+  const waitForStart = () =>
+    new Promise((resolve) => {
+      startWaiter.current?.(false)
+      const timer = setTimeout(() => finish(false), START_TIMEOUT_MS)
+      function finish(ok) {
+        clearTimeout(timer)
+        if (startWaiter.current === finish) startWaiter.current = null
+        resolve(ok)
+      }
+      startWaiter.current = finish
+    })
+
+  useCommandListener(user.uid, async (command) => {
+    if (command.type !== 'PLAY') return false // pause, seek and volume are P1
+    const { tmdbId, trailerKey } = command.payload ?? {}
+    const movie = await getMovie(tmdbId)
+    const toPlay = { ...movie, trailerKey: trailerKey ?? movie.trailerKey }
+    if (!toPlay.trailerKey) return false
+    const started = waitForStart()
+    setOpen(null)
+    setPlaying(toPlay)
+    return started
+  })
+
+  const playingRef = useRef(null)
+  playingRef.current = playing
+
+  const onPlayerStart = useCallback(() => {
+    startWaiter.current?.(true)
+    const m = playingRef.current
+    if (m) updateSession(user.uid, { nowPlaying: { tmdbId: m.id, title: m.title, trailerKey: m.trailerKey }, state: 'playing' })
+  }, [user.uid])
+
+  // Back to idle whenever the player closes.
+  const wasPlaying = useRef(false)
+  useEffect(() => {
+    if (playing) wasPlaying.current = true
+    else if (wasPlaying.current) updateSession(user.uid, { nowPlaying: null, state: 'idle' })
+  }, [playing, user.uid])
+  const onPlayerFail = useCallback(() => startWaiter.current?.(false), [])
 
   const col = cols[row] ?? 0
   const focused = rows?.[row]?.titles[col]
@@ -136,8 +210,14 @@ export default function Tv() {
         </section>
       ))}
 
+      {!activated && !playing && (
+        <p className="tv-banner">Press any key on the TV so the phone can start trailers with sound.</p>
+      )}
+
       {open && <TvDetail movie={detail.movie} error={detail.error} />}
-      {playing && <TvPlayer movie={playing} onClose={() => setPlaying(null)} />}
+      {playing && (
+        <TvPlayer movie={playing} onClose={() => setPlaying(null)} onStart={onPlayerStart} onFail={onPlayerFail} />
+      )}
     </div>
   )
 }

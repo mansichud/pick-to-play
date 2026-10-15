@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { formatRuntime, getMovie, posterUrl } from '../tmdb'
 import useAsync from '../useAsync'
+import SendToTv from '../phone/SendToTv'
 
 export default function PhoneTitle() {
   const { id } = useParams()
@@ -26,6 +27,7 @@ export default function PhoneTitle() {
               .filter(Boolean)
               .join(' · ')}
           </p>
+          <SendToTv movie={movie} />
           <p>{movie.overview || 'No synopsis available.'}</p>
         </article>
       )}

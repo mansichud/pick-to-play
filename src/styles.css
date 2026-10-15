@@ -146,3 +146,15 @@ button.link {
 .tv-search-field { display: flex; align-items: center; gap: 20px; }
 .tv-search-field .tv-search-query { flex: 0 1 auto; }
 .tv-key.tv-clear { padding: 0 20px; font-size: 22px; }
+
+/* TV: shown until someone presses a key, which lets phone-started trailers play with sound */
+.tv-banner {
+  position: fixed; top: 0; left: 0; right: 0; margin: 0; padding: 14px 64px;
+  background: #3a2f0b; color: #ffd56b; font-size: 22px; z-index: 5;
+}
+
+/* Phone: Send to TV */
+.send { margin: 4px 0 16px; }
+.send-button { width: 100%; font-size: 17px; padding: 14px; }
+.send p { margin: 8px 0 0; font-size: 14px; }
+.send-hint { font-size: 14px; }
